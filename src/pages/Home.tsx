@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore';
 import { getTelegramUser } from '../lib/telegram';
 import { Gift, Star, ChevronRight, Sparkles, TrendingUp, Shield, Truck, Zap, Percent, Clock } from 'lucide-react';
 import { useCreateReferral, useUserReferrals, useProducts, useBanners, usePromotions, useProductsByIds } from '../lib/supabase/hooks';
+import { userQueries } from '../lib/supabase/queries';
 import { getRecentlyViewed } from '../lib/recentlyViewed';
 import { Logo } from '../components/Logo';
 import { ValueHook } from '../components/ValueHook';
@@ -44,11 +45,18 @@ export const Home = () => {
         setLanguage(langCode);
       }
 
+      // Auto-register user in database on first visit
+      userQueries.upsert(user.id, {
+        first_name: user.first_name || 'User',
+        username: user.username,
+        language: langCode === 'uz' ? 'uz' : 'ru',
+      }).catch(console.error);
+
       if (userReferrals.length === 0 && createReferral.status === 'idle') {
         createReferral.mutate(user.id);
       }
     }
-  }, [user?.id, userReferrals.length, createReferral.status, createReferral, setLanguage, setTelegramUserId, user]);
+  }, [user?.id, userReferrals.length, createReferral.status, createReferral, setLanguage, setTelegramUserId, user?.first_name, user?.username, user?.language_code]);
 
   const handleLanguageSelect = (lang: 'ru' | 'uz') => {
     setLanguage(lang);
